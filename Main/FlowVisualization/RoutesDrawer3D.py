@@ -1,10 +1,14 @@
-import json
-import matplotlib.pyplot as plt
-import os
 import datetime
+import json
+import os
+
+import matplotlib.pyplot as plt
 
 
 def routes_drawer_3D(file_path):
+    """
+    Рисовка треков в пространстве
+    """
 
     with open(f'{file_path}') as f:
         data = json.load(f)

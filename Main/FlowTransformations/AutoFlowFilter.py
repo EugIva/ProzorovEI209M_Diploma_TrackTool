@@ -1,15 +1,20 @@
-import MathVincenty
 import json
 import os
-from tkinter import messagebox
-import FlowInfo
-import PushNotify
-from functions import file_existing_choose
 import time
+from tkinter import messagebox
+
 from tqdm import tqdm
+
+import Main.FlowVisualization.FlowInfo
+import Main.MathVincenty
+import Main.PushNotify
+from Main.Functions import file_existing_choose
 
 
 def filter_flow(self, file_path, filtered_info_label):
+    """
+    Преобразование потока путём отсеивания рейсов, которые не проходят по отмеченным условиям
+    """
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -38,22 +43,39 @@ def filter_flow(self, file_path, filtered_info_label):
             pbar.set_description('Выполнение автоматического фильтрования потока')
             if self.min_points_var.get() and len(flight_data) < int(self.min_points_entry.get()):
                 continue
+
             if self.airport_origin_var.get() and any(item['airportOrigin'] == "" for item in flight_data):
                 continue
+
             if self.airport_destination_var.get() and any(item['airportDestination'] == "" for item in flight_data):
                 continue
-            if self.code_reys_var.get() and any(item['flightNumber'] == "" for item in flight_data):
+
+            if self.check_flightNumber_var.get() and any(item['flightNumber'] == "" for item in flight_data):
                 continue
+
             if self.type_vs_var.get() and any(item['aircraftCode'] == "" for item in flight_data):
                 continue
+
             if self.bort_number_var.get() and any(item['id'] == "" for item in flight_data):
                 continue
+
             if self.no_missing_coords_var.get() and any(
                     item['latitude'] == "" or item['longitude'] == "" for item in flight_data):
                 continue
+
             if self.no_missing_altitude_var.get() and any(item['altitude_Ft'] == "" for item in flight_data):
                 continue
+
             if self.speed_var.get() and any(item['groundSpeed_Kts'] == "" for item in flight_data):
+                continue
+
+            if self.callsign_var.get() and any(item['callsign'] == "" for item in flight_data):
+                continue
+
+            if self.check_dep_time_var.get() and any(item['origin_time'] == "NULL" for item in flight_data):
+                continue
+
+            if self.check_arr_time_var.get() and any(item['destination_time'] == "NULL" for item in flight_data):
                 continue
 
             if self.takeoff_to_landing_var.get():
@@ -76,7 +98,7 @@ def filter_flow(self, file_path, filtered_info_label):
                 for i in range(len(flight_data) - 1):
                     point1 = (flight_data[i]['latitude'], flight_data[i]['longitude'])
                     point2 = (flight_data[i + 1]['latitude'], flight_data[i + 1]['longitude'])
-                    distance = MathVincenty.vincenty(point1, point2)
+                    distance = Main.MathVincenty.vincenty(point1, point2)
                     distances.append(distance)
                 if any(distance > int(self.min_distance_entry.get()) for distance in distances):
                     continue
@@ -114,9 +136,10 @@ def filter_flow(self, file_path, filtered_info_label):
             json.dump([item for flight_data in filtered_flights.values() for item in flight_data], f, indent=4)
         print(f"Процесс авто-фильтрации завершен успешно. Результат сохранен в файле {output_file_path}")
 
-        FlowInfo.display_flow_info(output_file_path, filtered_info_label, None)
+        Main.FlowVisualization.FlowInfo.display_flow_info(output_file_path, filtered_info_label, None)
 
-        PushNotify.notify_popup('Авто-фильтрация потока', f'Преобразование потока {file_name_short} завершено успешно')
+        Main.PushNotify.notify_popup('Авто-фильтрация потока',
+                                     f'Преобразование потока {file_name_short} завершено успешно')
 
     except Exception as e:
         print(f"{e}")

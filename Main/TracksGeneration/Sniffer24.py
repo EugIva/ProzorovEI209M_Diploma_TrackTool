@@ -1,9 +1,11 @@
-import requests
-from FlightRadar24.api import FlightRadar24API
 import time
 from datetime import datetime
 
+import requests
+from FlightRadar24.api import FlightRadar24API
 
+
+# Получение треков с помощью онлайн сниффера
 class Sniffer24:
     time_step = 1
 
@@ -24,6 +26,9 @@ class Sniffer24:
             self.on_ground = on_ground
 
     def launch_counter(self):
+        """
+        Получение треков с помощью онлайн сниффера
+        """
         timing = time.time()
         self.out = open(self.out_filename, "a")
         self.out.write('[ \n')

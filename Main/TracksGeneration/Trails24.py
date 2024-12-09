@@ -1,10 +1,12 @@
 import json
-from FlightRadar24.api import FlightRadar24API
-from datetime import datetime
 import time
+from datetime import datetime
+
+from FlightRadar24.api import FlightRadar24API
 from tqdm import tqdm
 
 
+# Получение треков путём доставания архивной информации о пройденном пути
 class Trails24:
     def __init__(self, coords, destination_filename):
         self.out_filename = destination_filename
@@ -12,6 +14,9 @@ class Trails24:
         self.fr_api = FlightRadar24API()
 
     def launch_counter(self, iterations=1, pause_time=0, pause_trail_time=0):
+        """
+        Получение треков путём доставания архивной информации о пройденном пути
+        """
         flight_data = {}
         for i in tqdm(range(iterations)):
             try:
@@ -50,7 +55,13 @@ class Trails24:
         for flight in flights:
             print(flight.callsign)
             details = self.fr_api.get_flight_details(flight)
-            flight_history = details['trail']
+
+            # Используем метод get() для получения значения 'trail' с обработкой отсутствия ключа
+            flight_history = details.get('trail')
+
+            if flight_history is None:
+                print(f"Ошибка: Не удалось спарсить рейс {flight.callsign} (ID: {flight.id}). Отсутствует ключ 'trail'.")
+                continue  # Пропускаем текущий рейс и переходим к следующему
 
             flight_id = flight.id
             flight_time_dep = details['time']['real']['departure']
@@ -62,6 +73,7 @@ class Trails24:
             if flight_id not in flight_data:
                 flight_data[flight_id] = []
             unique_points = set()
+
             for point in flight_history:
                 try:
                     time_dep = datetime.fromtimestamp(flight_time_dep).strftime(
@@ -93,6 +105,7 @@ class Trails24:
                     point['hd']
                 )
                 unique_points.add(data)
+
             flight_data[flight_id] = [dict(zip([
                 "time",
                 "id",

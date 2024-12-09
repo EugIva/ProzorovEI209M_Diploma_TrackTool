@@ -1,10 +1,15 @@
-import json
-import matplotlib.pyplot as plt
 import datetime
+import json
 import os
+
+import matplotlib.pyplot as plt
 
 
 def vertical_routes_drawer(file_path):
+    """
+    Рисовка вертикальных профилей
+    """
+
     with open(f'{file_path}') as f:
         data = json.load(f)
 

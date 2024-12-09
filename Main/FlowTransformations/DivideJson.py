@@ -1,10 +1,14 @@
-import os
 import json
+import os
 from tkinter import messagebox
-import PushNotify
+
+import Main.PushNotify
 
 
 def divide_json_file(file_path):
+    """
+    Разделение потока на раздельные рейсы, каждому рейсу свой json файл
+    """
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -36,7 +40,7 @@ def divide_json_file(file_path):
             with open(file_name, 'w') as f:
                 json.dump(items, f, indent=4)
 
-        PushNotify.notify_popup('Разделение JSON', f'Преобразование потока {file_name_short} завершено успешно')
+        Main.PushNotify.notify_popup('Разделение JSON', f'Преобразование потока {file_name_short} завершено успешно')
     except Exception as e:
         print(f"{e}")
         messagebox.showerror("Ошибка", "Файл не корректный. Проверьте формат или содержимое файла.")

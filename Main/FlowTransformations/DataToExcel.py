@@ -1,11 +1,16 @@
 import json
-from tkinter import messagebox
-import pandas as pd
 import os
-import PushNotify
+from tkinter import messagebox
+
+import pandas as pd
+
+import Main.PushNotify
 
 
 def convert_json_excel(file_path):
+    """
+    Преобразование потока в Excel табличку
+    """
     try:
         with open(f'{file_path}') as f:
             data = json.load(f)
@@ -47,7 +52,8 @@ def convert_json_excel(file_path):
             df.to_excel(workbook, index=False)
             workbook.close()
 
-        PushNotify.notify_popup('Конвертация в Excel', f'Преобразование потока {file_name_short}  завершено успешно')
+        Main.PushNotify.notify_popup('Конвертация в Excel',
+                                     f'Преобразование потока {file_name_short}  завершено успешно')
 
     except Exception as e:
         print(f"{e}")

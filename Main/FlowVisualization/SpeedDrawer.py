@@ -6,6 +6,10 @@ from matplotlib import pyplot as plt
 
 
 def draw_speed_graph(file_path, speed_type_var):
+    """
+    Рисовка графиков скорости
+    """
+
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)

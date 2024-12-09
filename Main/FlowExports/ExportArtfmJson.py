@@ -1,19 +1,23 @@
-import json
 import datetime
+import json
 import os
 import pathlib
 from datetime import datetime
 from tkinter import messagebox
-import MathVincenty
-import PushNotify
+
 from tqdm import tqdm
 
-from AircraftInfo import get_aircraft_data
-from ArportInfo import get_airport_data
-from functions import file_existing_choose
+import Main.MathVincenty
+import Main.PushNotify
+from Main.AircraftInfo import get_aircraft_data
+from Main.ArportInfo import get_airport_data
+from Main.Functions import file_existing_choose
 
 
-def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
+def convert_json_atfm(self, json_file, catalog_id, commentary, name, user_id, number):
+    """
+    Преобразование потока в другой формат - в json поток для импорта в ATFM
+    """
     try:
         with open(json_file, 'r') as f:
             json_data = json.load(f)
@@ -43,6 +47,10 @@ def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
         trip_dict = {}
         pbar = tqdm(json_data)
         for trip in pbar:
+
+            true_russia_code = f"{'R' if get_airport_data('iata_code', trip['airportOrigin'], 'iso_code') == 'RU' else 'Z'}{'R' if get_airport_data('iata_code', trip['airportDestination'], 'iso_code') == 'RU' else 'Z'}"
+            russia_code = ('RR' if self.russia_code_var_atfm.get() else f'{true_russia_code}')
+
             pbar.set_description("Выполнение преобразования JSON в ATFM формат")
             trip_id = trip["id"]
             if trip_id not in trip_dict:
@@ -50,7 +58,10 @@ def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
                     "TripId": convert_string_to_int(trip_id),
                     "CatalogId": int(catalog_id),
                     "AircraftCode": trip["callsign"],
-                    "WeightCat": 'H' if get_aircraft_data('ICAO', trip['aircraftCode'], 'WTC') is None else get_aircraft_data('ICAO', trip['aircraftCode'], 'WTC'),
+                    "WeightCat": 'H' if get_aircraft_data('ICAO', trip['aircraftCode'],
+                                                          'WTC') is None else get_aircraft_data('ICAO',
+                                                                                                trip['aircraftCode'],
+                                                                                                'WTC'),
                     "AircraftType": trip["aircraftCode"],
                     "DepartureCode": get_airport_data('iata_code', trip["airportOrigin"], 'icao_code'),
                     "DepartureId": None,
@@ -60,7 +71,7 @@ def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
                     "ArrivalId": None,
                     "ArrivalTime": convert_string_to_iso2(trip.get("destination_time")) if trip.get(
                         "destination_time") else None,
-                    "RussiaCode": "RR",
+                    "RussiaCode": russia_code,
                     "FlightType": None,
                     "RegNumber": trip["flightNumber"],
                     "Prioritet": None,
@@ -107,7 +118,7 @@ def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
             for i in range(len(routes) - 1):
                 point1 = (routes[i]["Latitude"], routes[i]["Longitude"])
                 point2 = (routes[i + 1]["Latitude"], routes[i + 1]["Longitude"])
-                distance = MathVincenty.vincenty(point1, point2)
+                distance = Main.MathVincenty.vincenty(point1, point2)
                 distances.append(distance)
             for i, route in enumerate(routes):
                 if i == 0:
@@ -123,8 +134,8 @@ def convert_json_atfm(json_file, catalog_id, commentary, name, user_id, number):
 
         dir_path, file_name = os.path.split(json_file)
         file_name_short = os.path.splitext(file_name)[0]
-        PushNotify.notify_popup('Преобразование для ATFM',
-                                f'Конвертация потока {file_name_short} для ATFM модели завершена успешно')
+        Main.PushNotify.notify_popup('Преобразование для ATFM',
+                                     f'Конвертация потока {file_name_short} для ATFM модели завершена успешно')
 
     except Exception as e:
         print(f"{e}")
@@ -140,12 +151,18 @@ def convert_time_to_iso(time):
 
 
 def convert_string_to_iso(date_string):
+    """
+    Конвертация времени в другой формат
+    """
     date_object = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S.%f")
     iso_string = date_object.strftime("%Y-%m-%dT%H:%M:%S")
     return iso_string
 
 
 def convert_string_to_iso2(date_string):
+    """
+    Конвертация с проверкой на наличие такого поля в данных
+    """
     if date_string is None or date_string == 'NULL':
         return None
     else:

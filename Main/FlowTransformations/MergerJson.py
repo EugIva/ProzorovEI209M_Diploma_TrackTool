@@ -1,12 +1,15 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
+import datetime
 import json
 import os
-import datetime
-import FlowInfo
-import PushNotify
-from functions import file_existing_choose
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
 from tqdm import tqdm
+
+import Main.FlowVisualization.FlowInfo
+import Main.PushNotify
+from Main.Functions import file_existing_choose
+
 
 def find_merge_json_files():
     json_files = filedialog.askopenfilenames(filetypes=[("JSON Files", "*.json")])
@@ -22,6 +25,9 @@ def find_json_files(self):
 
 
 def display_json_files(self):
+    """
+    Отображение потоков в табличке
+    """
     self.treeview.delete(*self.treeview.get_children())
     flights = {}
     total_flights = 0
@@ -52,6 +58,9 @@ def display_json_files(self):
 
 
 def merge_json_files(self):
+    """
+    Слияние потоков из разных файлов в новый, с выбором конкректных рейсов
+    """
     try:
         output_file_name = self.output_file_entry.get()
         if output_file_name:
@@ -81,12 +90,12 @@ def merge_json_files(self):
             with open(output_file_path, 'w') as f:
                 json.dump(merged_data, f, indent=4)
 
-            FlowInfo.display_flow_info(output_file_path, self.file_info_label_merger, None)
+            Main.FlowVisualization.FlowInfo.display_flow_info(output_file_path, self.file_info_label_merger, None)
 
             self.stats_label.config(text=f"Создание файлов завершено успешно и помещено в {output_file_path}")
             print("JSON файл успешно создан.")
-            PushNotify.notify_popup('Объединение и редактирование JSON',
-                                    f'Создание файла {output_file_name} завершено успешно')
+            Main.PushNotify.notify_popup('Объединение и редактирование JSON',
+                                         f'Создание файла {output_file_name} завершено успешно')
         else:
             print("Введите название для создания файла.")
     except Exception as e:
@@ -95,6 +104,9 @@ def merge_json_files(self):
 
 
 def delete_selected_items(self):
+    """
+    Удаление выделенных рейсов из таблички
+    """
     selection = self.treeview.selection()
     for item in selection:
         self.treeview.delete(item)

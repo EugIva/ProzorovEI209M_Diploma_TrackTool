@@ -1,19 +1,22 @@
+import datetime
 import importlib
 import json
-import shutil
-import textwrap
-import tkinter as tk
-from tkinter import messagebox, filedialog, ttk
-from FlightRadar24 import FlightRadar24API
-import FlowInfo
-import PushNotify
-import Sniffer24 as snf
-import Trails24 as trl
-import time
-from datetime import datetime
-import subprocess
 import os
-import datetime
+import shutil
+import subprocess
+import sys
+import textwrap
+import time
+import tkinter as tk
+from datetime import datetime
+from tkinter import messagebox, filedialog, ttk
+
+from FlightRadar24 import FlightRadar24API
+
+import Main.FlowVisualization.FlowInfo
+import Main.PushNotify
+import Main.TracksGeneration.Sniffer24 as snf
+import Main.TracksGeneration.Trails24 as trl
 
 sniffer = None
 
@@ -21,6 +24,9 @@ sniffer = None
 # Запуск сниффера
 def launch_timer(session_time_entry, latitude_entry, longitude_entry, radius_entry, filename_entry, callsign_entry,
                  origin_airport_entry, on_ground_combobox, file_info_label):
+    """
+    Запуск генерации треков - онлайн-сниффера
+    """
     global sniffer
 
     if not os.path.exists('Exports/sniffer'):
@@ -43,11 +49,14 @@ def launch_timer(session_time_entry, latitude_entry, longitude_entry, radius_ent
                           on_ground_combobox.get())
     sniff.launch_counter()
 
-    FlowInfo.display_flow_info(file_path_info, file_info_label, None)
-    PushNotify.notify_popup('Генерация треков', f'Создание файла {file_name_short} с потоком завершено успешно')
+    Main.FlowVisualization.FlowInfo.display_flow_info(file_path_info, file_info_label, None)
+    Main.PushNotify.notify_popup('Генерация треков', f'Создание файла {file_name_short} с потоком завершено успешно')
 
 
 def file_existing_choose(filename):
+    """
+    Проверка наличия одноимённого файла и выбор действия в случае наличия такого
+    """
     if os.path.exists(filename):
         with open(filename, 'r') as f:
             file_content = f.read()
@@ -76,12 +85,14 @@ def file_existing_choose(filename):
         print(f"Создание нового файла {filename}...")
 
 
-# Уведомление о совпадающих именах и удаление лишних
 def delete_json_file(filename, data):
+    """
+    Уведомление о совпадающих именах и удаление лишних
+    """
     root = tk.Tk()
     root.title("Удаление файла")
     root.geometry("400x100")
-    root.iconbitmap("content/UI/attention.ico")
+    root.iconbitmap("Content/UI/attention.ico")
 
     label1 = ttk.Label(root, text=f"Найдено совпадение имени файлов.")
     label1.pack(pady=5)
@@ -140,13 +151,15 @@ def delete_json_file(filename, data):
     root.mainloop()
 
 
-# проверка существования одноимённой папки
 def folder_existing_choose(folder_name):
+    """
+    Проверка существования одноимённой папки и выбор действия в случае наличия такой
+    """
     if os.path.exists(folder_name):
         root = tk.Tk()
         root.title("Папка с таким именем уже существует")
         root.geometry("400x100")
-        root.iconbitmap("content/UI/attention.ico")
+        root.iconbitmap("Content/UI/attention.ico")
 
         label1 = ttk.Label(root, text=f"Найдено совпадение имени папки.")
         label1.pack(pady=5)
@@ -211,17 +224,22 @@ def delete_file(filename):
         messagebox.showerror("Ошибка", f"Ошибка при удалении файла {filename}: {e}")
 
 
-def stop_timer():
-    global sniffer
-    if sniffer is not None:
-        sniffer.stop()
-        sniffer = None
+def start_programm(full_module_path, function_name, *args, **kwargs):
+    """
+    Универсальный запуск подпрограмм
+    """
+    # деление на package и module
+    module_parts = full_module_path.split('.')
+    package_name = '.'.join(module_parts[:-1])
+    module_name = module_parts[-1]
 
+    # проверка путей к модулям
+    package_dir = os.path.join(os.path.dirname(__file__), *package_name.split('.'))
+    if package_dir not in sys.path:
+        sys.path.insert(0, package_dir)
 
-# Кнопка запуска некоторого доп функционала
-def start_programm(module_name, function_name, *args, **kwargs):
     try:
-        module = importlib.import_module(module_name)
+        module = importlib.import_module(full_module_path)
         function = getattr(module, function_name)
         return function(*args, **kwargs)
     except Exception as e:
@@ -229,9 +247,13 @@ def start_programm(module_name, function_name, *args, **kwargs):
         messagebox.showerror("Ошибка", "Файл не корректный или не выбран. Проверьте формат или содержимое файла.")
 
 
-# Кнопка "открыть папку"
 def open_folder(folder_name):
-    folder_path = os.path.join(os.path.dirname(__file__), "Exports", f"{folder_name}")
+    """
+    Кнопка "открыть папку"
+    """
+    root_dir = os.path.dirname(os.path.dirname(__file__))
+
+    folder_path = os.path.join(root_dir, "Exports", f"{folder_name}")
     if os.path.exists(folder_path):
         if os.name == 'nt':
             os.startfile(folder_path)
@@ -241,16 +263,20 @@ def open_folder(folder_name):
         print("Папка не обнаружена")
 
 
-# Кнопка "поиск" для выбора файла.
 def find_file(file_entry, title):
+    """
+    Кнопка "поиск" для выбора файла.
+    """
     file_entry.delete(0, tk.END)
     file_path = filedialog.askopenfilename(initialdir="Exports/trails/", title=f"{title}")
     if file_path:
         file_entry.insert(0, file_path)
 
 
-# Запуск получения слепка.
 def launch_trail_getter(treeview, filename_entry, iterations_entry, pause_entry, pause_trail_entry, file_info_label):
+    """
+    Запуск получения треков с помощью слепка
+    """
     try:
         filename = filename_entry.get()
 
@@ -280,10 +306,10 @@ def launch_trail_getter(treeview, filename_entry, iterations_entry, pause_entry,
         getter.launch_counter(iterations, pause_time, pause_trail_time)
 
         file_path = f"Exports/trails/{filename_entry.get()}.json"
-        FlowInfo.display_flow_info(file_path, file_info_label, None)
+        Main.FlowVisualization.FlowInfo.display_flow_info(file_path, file_info_label, None)
 
-        PushNotify.notify_popup('Генерация треков',
-                                f'Создание файла {file_name_short} со слепком потока завершено успешно')
+        Main.PushNotify.notify_popup('Генерация треков',
+                                     f'Создание файла {file_name_short} со слепком потока завершено успешно')
 
     except Exception as e:
         print(f"launch_trail_getter error: {e}")
@@ -291,6 +317,9 @@ def launch_trail_getter(treeview, filename_entry, iterations_entry, pause_entry,
 
 # Коды для кнопок на форме слепка
 def add_coords_to_table(treeview, city_entry, radius_entry, latitude_entry, longitude_entry):
+    """
+    Кнопка на форме слепка для добавления координат в таблицу
+    """
     try:
         city = city_entry.get()
         radius = radius_entry.get()
@@ -309,6 +338,9 @@ def add_coords_to_table(treeview, city_entry, radius_entry, latitude_entry, long
 
 
 def delete_coords_from_table(treeview):
+    """
+    Кнопка на форме слепка для удаления координат из таблицы
+    """
     try:
         selected_item = treeview.selection()[0]
         treeview.delete(selected_item)
@@ -317,8 +349,11 @@ def delete_coords_from_table(treeview):
 
 
 def import_coords_from_file(treeview):
+    """
+    Кнопка на форме слепка для импортирования координат в таблицу
+    """
     try:
-        initial_dir = "content\CoordPacks"
+        initial_dir = "Content\CoordPacks"
         file_path = filedialog.askopenfilename(title="Выберите файл со списком координат", initialdir=initial_dir,
                                                filetypes=[("JSON files", "*.json")])
         if file_path:
@@ -333,8 +368,11 @@ def import_coords_from_file(treeview):
 
 
 def export_coords_to_file(treeview):
+    """
+    Кнопка на форме слепка для экспортирования координат из таблицы
+    """
     try:
-        initial_dir = "content\CoordPacks"
+        initial_dir = "Content\CoordPacks"
         file_path = filedialog.asksaveasfilename(title="Save file", initialdir=initial_dir, defaultextension=".json",
                                                  filetypes=[("JSON files", "*.json")])
         if file_path:
@@ -351,6 +389,9 @@ def export_coords_to_file(treeview):
 
 # Очистка полей в фильтре снифера
 def clear_field(field, switch_var):
+    """
+    Очистка полей в фильтре снифера
+    """
     if switch_var.get() == 0:
         if field.get() != "":
             if messagebox.askyesno("Очистка поля", "Поле будет очищено"):
@@ -390,11 +431,14 @@ def disable_field(field):
         field.config(state='disabled')
 
 
-# Окно справочной информации по кнопке "?"
+# Окно справочной информации по кнопке "?", для каждой вкладки берётся свой текст из txt файла
 def show_info(self, text):
+    """
+    Окно справочной информации по кнопке "?"
+    """
     info_window = tk.Toplevel(self.root)
     info_window.title("Справочная информация")
-    info_window.iconbitmap("content/UI/logo.ico")
+    info_window.iconbitmap("Content/UI/logo.ico")
     wrapped_text = textwrap.fill(text, width=80)
     info_label = ttk.Label(info_window, text=wrapped_text, font=self.font_txt, foreground='grey', justify="left",
                            anchor="w", wraplength=400)
@@ -402,6 +446,9 @@ def show_info(self, text):
 
 
 def read_help_texts(file_name):
+    """
+    Получение информации для кнопки "?"
+    """
     with open(file_name, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
@@ -421,11 +468,14 @@ def read_help_texts(file_name):
     return help_texts
 
 
-# Очистка всех данных, сохранённых программой
+# форматирование экспорта
 def clear_exports(self):
+    """
+    Очистка всех данных, сохранённых программой
+    """
     confirmation_window = tk.Toplevel(self.root)
     confirmation_window.title("Подтверждение")
-    confirmation_window.iconbitmap("content/UI/attention.ico")
+    confirmation_window.iconbitmap("Content/UI/attention.ico")
 
     confirmation_label = ttk.Label(confirmation_window,
                                    text="Вы уверены, что хотите удалить все файлы в директории 'Exports'?")
@@ -444,10 +494,13 @@ def clear_exports(self):
     cancel_button = ttk.Button(confirmation_window, text="Нет", command=confirmation_window.destroy)
     cancel_button.pack(side="right", padx=10, pady=10)
 
-    PushNotify.notify_popup('Очистка контента', 'Все сгенерированные данные в папке exports удалены успешно')
+    Main.PushNotify.notify_popup('Очистка контента', 'Все сгенерированные данные в папке exports удалены успешно')
 
 
 def sort_by_column(self, tv, col, descending):
+    """
+    Сортировки столбиков таблиц
+    """
     data = []
     if col == "#0":
         for child in tv.get_children(''):

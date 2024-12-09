@@ -18,6 +18,7 @@ MAX_ITERATIONS = 200
 CONVERGENCE_THRESHOLD = 1e-12  # .000,000,000,001
 
 
+# Расчёт расстояний между точками на сфере
 def vincenty_inverse(point1, point2, miles=False):
     """
     Vincenty's formula (inverse method) to calculate the distance (in
@@ -84,8 +85,8 @@ def vincenty_inverse(point1, point2, miles=False):
     A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)))
     B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)))
     deltaSigma = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma *
-                 (-1 + 2 * cos2SigmaM ** 2) - B / 6 * cos2SigmaM *
-                 (-3 + 4 * sinSigma ** 2) * (-3 + 4 * cos2SigmaM ** 2)))
+                                                       (-1 + 2 * cos2SigmaM ** 2) - B / 6 * cos2SigmaM *
+                                                       (-3 + 4 * sinSigma ** 2) * (-3 + 4 * cos2SigmaM ** 2)))
     s = b * A * (sigma - deltaSigma)
 
     s /= 1000  # meters to kilometers
@@ -94,8 +95,10 @@ def vincenty_inverse(point1, point2, miles=False):
 
     return round(s, 6)
 
+
 vincenty = vincenty_inverse
 
 if __name__ == '__main__':
     import doctest
+
     doctest.testmod()

@@ -1,11 +1,15 @@
-import json
-import matplotlib.pyplot as plt
-import os
-import matplotlib.patches as patches
 import datetime
+import json
+import os
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 
 
 def RoutesDrawer2D(file_path):
+    """
+    Рисовка треков в 2Д формате
+    """
 
     with open(f'{file_path}', 'r') as file:
         data = json.load(file)

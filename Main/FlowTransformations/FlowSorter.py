@@ -1,11 +1,13 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
+import datetime
 import json
 import os
-import datetime
-import PushNotify
-from functions import folder_existing_choose
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
 from tqdm import tqdm
+
+import Main.PushNotify
+from Main.Functions import folder_existing_choose
 
 
 class FlowSorter:
@@ -23,6 +25,9 @@ class FlowSorter:
         self.display_json_files()
 
     def display_json_files(self):
+        """
+        Отображение потоков в табличке
+        """
         self.correct_items.clear()
         self.incorrect_items.clear()
         self.gui.correct_count_label.config(text=f"")
@@ -58,6 +63,9 @@ class FlowSorter:
         self.gui.stats_label_sorting.config(text=f"Общее количество рейсов: {total_flights}")
 
     def move_to_correct(self):
+        """
+        Пометка рейса как корректного и перенос в определённый список
+        """
         selection = self.gui.treeview_sorting.selection()
         for item in selection:
             self.correct_items.append(self.gui.treeview_sorting.item(item, 'values'))
@@ -66,6 +74,9 @@ class FlowSorter:
         self.last_move = 'correct'
 
     def move_to_incorrect(self):
+        """
+        Пометка рейса как некорректного и перенос в определённый список
+        """
         selection = self.gui.treeview_sorting.selection()
         for item in selection:
             self.incorrect_items.append(self.gui.treeview_sorting.item(item, 'values'))
@@ -74,21 +85,26 @@ class FlowSorter:
         self.last_move = 'incorrect'
 
     def undo_last_move(self):
+        """
+        Отмена последнего действия, возврат ранее отмеченного рейса из категории в список
+        """
         if self.last_move == 'correct':
             if self.correct_items:
                 last_item = self.correct_items.pop()
                 self.gui.treeview_sorting.insert("", "end", text='возврат из корректных',
                                                  values=(
-                                                 last_item[0], last_item[1], last_item[2], last_item[3], last_item[4],
-                                                 last_item[5]))
+                                                     last_item[0], last_item[1], last_item[2], last_item[3],
+                                                     last_item[4],
+                                                     last_item[5]))
                 self.gui.correct_count_label.config(text=f"Корректных: {len(self.correct_items)}")
         elif self.last_move == 'incorrect':
             if self.incorrect_items:
                 last_item = self.incorrect_items.pop()
                 self.gui.treeview_sorting.insert("", "end", text='возврат из испорченных',
                                                  values=(
-                                                 last_item[0], last_item[1], last_item[2], last_item[3], last_item[4],
-                                                 last_item[5]))
+                                                     last_item[0], last_item[1], last_item[2], last_item[3],
+                                                     last_item[4],
+                                                     last_item[5]))
                 self.gui.incorrect_count_label.config(text=f"Испорченных: {len(self.incorrect_items)}")
         self.last_move = None
 
@@ -99,6 +115,9 @@ class FlowSorter:
         self.gui.incorrect_count_label.config(text=f"")
 
     def export_sorted_files(self):
+        """
+        Ручная сортировка рейсов потока на качественные и некачественные
+        """
         try:
             output_folder = "Exports/flowSorted"
             if not os.path.exists(output_folder):
@@ -150,8 +169,8 @@ class FlowSorter:
                 self.gui.stats_label_sorting.config(
                     text=f"Создание файлов завершено успешно и сохранено в {folder_name}")
 
-                PushNotify.notify_popup('Сортировка треков потока',
-                                        f'Создание файлов завершено успешно и сохранено в {folder_name} ')
+                Main.PushNotify.notify_popup('Сортировка треков потока',
+                                             f'Создание файлов завершено успешно и сохранено в {folder_name} ')
             else:
                 print("Введите название для создания файла.")
 

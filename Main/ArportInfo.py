@@ -16,7 +16,7 @@ def get_airport_data(column_name, value, target_column):
     Возвращает значение из целевой колонки или None, если строка не найдена.
     """
 
-    csv_file_path = os.path.join('content', 'airport_info.csv')
+    csv_file_path = os.path.join('Content', 'airport_info.csv')
 
     # разные кодировки, если UTF-8 не работает
     encodings = ['utf-8', 'ISO-8859-1', 'latin-1']

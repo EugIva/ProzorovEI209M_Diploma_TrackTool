@@ -16,7 +16,7 @@ def get_aircraft_data(column_name, value, target_column):
 
     Возвращает значение из целевой колонки или None, если строка не найдена.
     """
-    csv_file_path = os.path.join('content', 'aircraft_info.csv')
+    csv_file_path = os.path.join('Content', 'aircraft_info.csv')
 
     with open(csv_file_path, 'r', newline='', encoding='utf-8') as file:
         reader = csv.DictReader(file, delimiter=';')

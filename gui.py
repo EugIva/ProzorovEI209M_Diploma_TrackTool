@@ -333,9 +333,6 @@ class TrackTool(TKMT.ThemedTKinterFrame):
                                              command=lambda: Main.Functions.open_folder("sniffer"))
         self.open_folder_button.grid(row=8, column=1, padx=40, pady=10)
 
-        # self.stop_button = ttk.Button(self.button_frame, text="  Остановить",  compound='left', command=functions.stop_timer)
-        # self.stop_button.grid(row=8, column=2, columnspan=1, padx=10, pady=30)
-
         self.sniffer_info_button = ttk.Button(self.button_frame, text="⍰",
                                               command=lambda: Main.Functions.show_info(self, self.help_sniffer),
                                               style='Toolbutton')

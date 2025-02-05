@@ -230,7 +230,7 @@ def create_route_file(flights, file_path):
                     None if point['time'] == 'NULL' else datetime.strptime(point['time'], update_date_format).strftime(
                         "%d.%m.%Y %H:%M:%S"),  # MOMENT
                     moment2,  # MOMENT2
-                    point['groundSpeed_Kts'],  # SPEED
+                    point['groundSpeed_Kts'],  # SPEED #ПЕРЕВОДИТЬ ИЗ УЗЛОВ В КМЧ ИЛИ МС
                     0,  # LAT_C
                     0,  # LONG_C
                     point['verticalSpeed'],  # VERT_SPEED

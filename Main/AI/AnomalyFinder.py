@@ -93,6 +93,7 @@ y_labels = np.array(labels)
 X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_labels, test_size=0.2, random_state=42)
 
 
+
 # Создание модели LSTM
 def create_lstm_model(input_shape):
     model = Sequential([
@@ -104,6 +105,7 @@ def create_lstm_model(input_shape):
     ])
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model
+
 
 
 # Создание модели

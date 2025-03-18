@@ -4,15 +4,18 @@ from tkinter import ttk
 
 import TKinterModernThemes as TKMT
 import tkintermapview
+from tkinter import font as tkFont
 
 import Main.FlowTransformations.AutoFlowFilter
 import Main.FlowTransformations.MergerJson
 import Main.FlowVisualization.FlowInfo
 import Main.Functions
+from Main.AI import AiTrainer, AiSorter
 from Main.FlowExports.ExportArtfmJson import convert_json_atfm
 from Main.FlowExports.ExportKimCsv import convert_csv_kim
 from Main.FlowTransformations.DivideJson import divide_json_file
 from Main.FlowTransformations.FlowSorter import FlowSorter
+from Main.FlowTransformations.MapRouteCutter import MapRouteCutter
 from Main.FlowTransformations.RouteCutter import RouteCutter
 from Main.FlowVisualization.RoutesDrawerMap import display_tracks, change_data_source, clear_map
 
@@ -28,13 +31,30 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         self.initial_frame = tk.Frame(self.root)
         self.initial_frame.pack(expand=1, fill=tk.BOTH)
 
+        style_initial_button = ttk.Style()
+        style_initial_button.configure("Initial.TButton", font=("Cygre Black", 15), foreground="DeepSkyBlue")
+
         # "Работа с данными"
-        data_button = ttk.Button(self.initial_frame, text="Работа с данными", command=self.load_data_notebook, style='Accent.TButton')
-        data_button.pack(fill=tk.X, expand=True, padx=400, pady=110, ipadx=80, ipady=10)
+        data_button = ttk.Button(self.initial_frame, text="Работа с данными", command=self.load_data_notebook,
+                                 style="Accent.TButton")
+        data_button.pack(fill=tk.X, anchor="w", padx=100, pady=70, ipadx=90, ipady=40)
 
         # "Нейросетевые функции"
-        neural_button = ttk.Button(self.initial_frame, text="Нейросетевые функции", command=self.load_neural_notebook, style='Accent.TButton')
-        neural_button.pack(fill=tk.X, expand=True, padx=400, pady=110, ipadx=80, ipady=10)
+        neural_button = ttk.Button(self.initial_frame, text="Нейросетевые функции", command=self.load_neural_notebook,
+                                   style='Accent.TButton')
+        neural_button.pack(fill=tk.X, anchor="e", padx=100, pady=70, ipadx=90, ipady=40)
+
+        # "Цвет окна"
+        color_scheme_var = tk.StringVar()
+        color_scheme_var.set("☀ / ☽")
+
+        color_scheme_option = ttk.OptionMenu(self.initial_frame, color_scheme_var, "", "dark", "light",
+                                             command=lambda value: change_color_scheme(self, value))
+        color_scheme_option.pack(fill=tk.X, expand=True, anchor="s", padx=10, pady=10, ipadx=10, ipady=10)
+
+        def change_color_scheme(self, value):
+            new_window = TrackTool("Sun-valley", value)
+            self.root.withdraw()
 
     def load_data_notebook(self):
         self.initial_frame.pack_forget()
@@ -72,13 +92,15 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         self.auto_filter_tab = ttk.Frame(self.file_notebook)
         self.manual_sorting_tab = ttk.Frame(self.file_notebook)
         self.track_cutter_tab = ttk.Frame(self.file_notebook)
+        self.map_track_cutter_tab = ttk.Frame(self.file_notebook)
 
         self.file_notebook.add(self.excel_tab, text=" Экспорт в Excel ")
         self.file_notebook.add(self.divide_json_tab, text=" Разделение JSON ")
         self.file_notebook.add(self.json_merger_tab, text="Слияние и редактирование JSON")
         self.file_notebook.add(self.auto_filter_tab, text="Авто-фильтрация потока")
-        self.file_notebook.add(self.manual_sorting_tab, text="Ручная сортировка потока")
+        self.file_notebook.add(self.manual_sorting_tab, text="Сортировка потока")
         self.file_notebook.add(self.track_cutter_tab, text="Вырезание участков трека")
+        self.file_notebook.add(self.map_track_cutter_tab, text="Обрезка трека на карте")
 
         # вкладка "экспортирование треков"
         self.exports_notebook = ttk.Notebook(self.exports_tab)
@@ -180,25 +202,10 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         self.help_flowInfo = help_texts['help_flowInfo']
         self.help_atfm = help_texts['help_atfm']
 
-
     def create_widgets(self):
         # настройки
         self.settings_frame = ttk.Frame(self.settings_tab)
         self.settings_frame.pack(fill="both", expand=True)
-
-        self.color_scheme_label = ttk.Label(self.settings_frame, text="Настройка цвета окна:", font=self.font_txt)
-        self.color_scheme_label.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
-
-        self.color_scheme_var = tk.StringVar()
-        self.color_scheme_var.set("☀ / ☽")
-
-        self.color_scheme_option = ttk.OptionMenu(self.settings_frame, self.color_scheme_var, "", "dark", "light",
-                                                  command=lambda value: change_color_scheme(self, value))
-        self.color_scheme_option.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-
-        def change_color_scheme(self, value):
-            new_window = TrackTool("Sun-valley", value)
-            self.root.withdraw()
 
         self.color_scheme_label = ttk.Label(self.settings_frame, text="Очистить все результаты:", font=self.font_txt)
         self.color_scheme_label.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
@@ -207,11 +214,9 @@ class TrackTool(TKMT.ThemedTKinterFrame):
                                                command=lambda: Main.Functions.clear_exports(self))
         self.clear_exports_button.grid(row=1, column=1, padx=10, pady=10)
 
-
         self.restart_button = ttk.Button(self.settings_frame, text="Сменить режим работы",
-                                    command=self.restart_application)
+                                         command=self.restart_application)
         self.restart_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
-
 
         # ВКЛАДКА "СНИФФЕР"
 
@@ -1326,11 +1331,11 @@ class TrackTool(TKMT.ThemedTKinterFrame):
                                                            style='Switch.TCheckbutton')
         self.check_flightNumber_checkbox.grid(row=5, column=4, padx=10, pady=10, sticky="w")
 
-        # Вкладка "ручная сортировка потока"
+        # Вкладка "сортировка потока"
         flow_sorter = FlowSorter(self)
 
         self.manual_sorting_frame = ttk.Frame(self.manual_sorting_tab)
-        self.manual_sorting_frame.pack(fill="both", expand=True)
+        self.manual_sorting_frame.pack(fill="x")
 
         self.file_label_sorting = ttk.Label(self.manual_sorting_frame, text="Выберите файл(ы):", font=self.font_txt,
                                             foreground='grey', justify="right", anchor="e")
@@ -1342,10 +1347,6 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         self.file_button_sorting = ttk.Button(self.manual_sorting_frame, text="Поиск",
                                               command=lambda: flow_sorter.find_json_files())
         self.file_button_sorting.grid(row=0, column=2, padx=10, pady=10)
-
-        self.sorting_button = ttk.Button(self.manual_sorting_frame, text="Отсортировать", compound='left',
-                                         command=lambda: flow_sorter.export_sorted_files(), style='Accent.TButton')
-        self.sorting_button.grid(row=0, column=3, padx=10, pady=10)
 
         self.open_folder_button_sorting = ttk.Button(self.manual_sorting_frame, text="Открыть папку", compound='left',
                                                      command=lambda: Main.Functions.open_folder("flowSorted"))
@@ -1362,9 +1363,22 @@ class TrackTool(TKMT.ThemedTKinterFrame):
 
         self.output_file_entry_sorting = ttk.Entry(self.manual_sorting_frame, width=60,
                                                    textvariable=self.sorted_name_var)
-        self.output_file_entry_sorting.grid(row=1, column=1, padx=0, pady=10)
+        self.output_file_entry_sorting.grid(row=1, column=1, padx=0, pady=0)
 
-        self.listbox_frame_sorting = ttk.LabelFrame(self.manual_sorting_frame, text="Сортировка потока")
+        self.empty_decortext_sorting = ttk.Label(self.manual_sorting_frame, text="  ", font=self.font_txt,
+                                                 foreground='grey', justify="right", anchor="e")
+        self.empty_decortext_sorting.grid(row=2, column=0, padx=10, pady=10)
+
+        self.sort_notebook = ttk.Notebook(self.manual_sorting_tab)
+        self.sort_notebook.pack(fill="both", expand=True)
+        self.handle_sort_frame = ttk.Frame(self.sort_notebook)
+        self.auto_sort_frame = ttk.Frame(self.sort_notebook)
+
+        self.sort_notebook.add(self.handle_sort_frame, text=" Ручная сортировка ")
+        self.sort_notebook.add(self.auto_sort_frame, text=" Автоматическая сортировка ")
+
+        # подвкладка "Ручная сортировка потока"
+        self.listbox_frame_sorting = ttk.LabelFrame(self.handle_sort_frame, text="Сортировка потока")
         self.listbox_frame_sorting.grid(row=3, column=0, columnspan=6, padx=10, pady=10)
 
         self.stats_frame_sorting = ttk.Frame(self.listbox_frame_sorting)
@@ -1446,17 +1460,21 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         style_incorrect.configure("Incorrect.TButton", font=("Cooper Black", 13), foreground="MediumPurple",
                                   background="green")
 
+        self.sorting_button = ttk.Button(self.button_frame_sorting, text="Отсортировать", compound='left',
+                                         command=lambda: flow_sorter.export_sorted_files(), style='Accent.TButton')
+        self.sorting_button.grid(row=0, column=2, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
+
         self.correct_pack_button = ttk.Button(self.button_frame_sorting, text="Корректный",
                                               command=lambda: flow_sorter.move_to_correct(), style="Correct.TButton")
-        self.correct_pack_button.grid(row=0, column=2, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
+        self.correct_pack_button.grid(row=1, column=2, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
 
         self.incorrect_pack_button = ttk.Button(self.button_frame_sorting, text="Испорченный",
                                                 command=lambda: flow_sorter.move_to_incorrect(),
                                                 style="Incorrect.TButton")
-        self.incorrect_pack_button.grid(row=1, column=2, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
+        self.incorrect_pack_button.grid(row=2, column=2, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
 
         self.remover_frame_sorting = ttk.Frame(self.button_frame_sorting)
-        self.remover_frame_sorting.grid(row=2, column=0, columnspan=3, sticky="ew")
+        self.remover_frame_sorting.grid(row=3, column=0, columnspan=3, sticky="ew")
 
         self.undo_button = ttk.Button(self.remover_frame_sorting, text="Отменить шаг",
                                       command=lambda: flow_sorter.undo_last_move())
@@ -1466,10 +1484,57 @@ class TrackTool(TKMT.ThemedTKinterFrame):
                                       command=lambda: flow_sorter.clear_sort())
         self.undo_button.grid(row=0, column=2, padx=2, pady=20, sticky="ew", ipadx=0, ipady=0)
 
-    # вкладка "вырезание участков треков" track_cutter_tab
+        # подвкладка "автоматическая сортировка потока"
+
+        self.autosorting_frame = ttk.LabelFrame(self.auto_sort_frame, text="Сортировка потока")
+        self.autosorting_frame.pack(fill="x")
+
+        self.file_label_autosorting = ttk.Label(self.autosorting_frame, text="Выберите шаблон:", font=self.font_txt,
+                                                foreground='grey', justify="right", anchor="e")
+        self.file_label_autosorting.grid(row=0, column=0, padx=10, pady=10)
+
+        self.file_entry_autosorting = ttk.Entry(self.autosorting_frame, width=60)
+        self.file_entry_autosorting.grid(row=0, column=1, padx=10, pady=10)
+
+        self.file_button_autosorting = ttk.Button(self.autosorting_frame, text="Поиск",
+                                                  command=lambda: flow_sorter.find_sorting_frame_files())
+        self.file_button_autosorting.grid(row=0, column=2, padx=10, pady=10)
+
+        self.autosorting_button = ttk.Button(self.autosorting_frame, text="Отсортировать по шаблону", compound='left',
+                                             command=lambda: flow_sorter.auto_export_sorted_files(),
+                                             style='Accent.TButton')
+        self.autosorting_button.grid(row=0, column=3, padx=20, pady=20, sticky="ew", ipadx=6, ipady=6)
+
+        self.total_flights_label = ttk.Label(self.autosorting_frame, text="Количество рейсов в файле: ",
+                                             font=self.font_txt)
+        self.total_flights_label.grid(row=1, column=0, padx=10, pady=10, sticky="e")
+
+        self.correct_template_label = ttk.Label(self.autosorting_frame, text="Корректных рейсов в шаблоне: ",
+                                                font=self.font_txt)
+        self.correct_template_label.grid(row=2, column=0, padx=10, pady=10, sticky="e")
+
+        self.incorrect_template_label = ttk.Label(self.autosorting_frame, text="Испорченных рейсов в шаблоне: ",
+                                                  font=self.font_txt)
+        self.incorrect_template_label.grid(row=3, column=0, padx=10, pady=10, sticky="e")
+
+        self.total_flights_value = ttk.Label(self.autosorting_frame, text="0", font=self.font_txt)
+        self.total_flights_value.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+
+        self.correct_template_value = ttk.Label(self.autosorting_frame, text="0", font=self.font_txt)
+        self.correct_template_value.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+
+        self.incorrect_template_value = ttk.Label(self.autosorting_frame, text="0", font=self.font_txt)
+        self.incorrect_template_value.grid(row=3, column=1, padx=10, pady=10, sticky="w")
+
+        # вкладка "вырезание участков треков" track_cutter_tab
         self.track_cutter_frame = ttk.Frame(self.track_cutter_tab)
         self.track_cutter_frame.pack(fill="both", expand=True)
         self.route_cutter = RouteCutter(self.track_cutter_frame)
+
+        # вкладка обрезки треков на карте map_track_cutter_tab
+        self.map_track_cutter_frame = ttk.Frame(self.map_track_cutter_tab)
+        self.map_track_cutter_frame.pack(fill="both", expand=True)
+        self.map_route_cutter = MapRouteCutter(self.map_track_cutter_tab)
 
     def restart_application(self):
         for widget in self.root.winfo_children():
@@ -1478,16 +1543,34 @@ class TrackTool(TKMT.ThemedTKinterFrame):
         self.create_initial_window()
 
     def load_neural_notebook(self):
+        self.font_txt = ('Fira Code SemiBold', 10)
+        self.font_txt_light = ('Fira Code Light', 8)
+
         self.initial_frame.pack_forget()
         self.neural_notebook = ttk.Notebook(self.root)
         self.neural_notebook.pack(expand=1, fill=tk.BOTH)
 
+        self.settings_tab2 = ttk.Frame(self.neural_notebook)
         self.neural_tab1 = ttk.Frame(self.neural_notebook)
         self.neural_tab2 = ttk.Frame(self.neural_notebook)
 
+        self.neural_notebook.add(self.settings_tab2, text="⚙")
         self.neural_notebook.add(self.neural_tab1, text="Использование нейросети")
         self.neural_notebook.add(self.neural_tab2, text="Обучение нейросети")
 
+        # Вкладка обучения нейросети
+        self.ai_trainer_interface = AiTrainer.AiTrainerInterface(self.neural_tab2)
+
+        # Вкладка применения нейросети
+        self.ai_sorter_interface = AiSorter.AiSorterInterface(self.neural_tab1)
+
+        # настройки
+        self.settings_frame2 = ttk.Frame(self.settings_tab2)
+        self.settings_frame2.pack(fill="both", expand=True)
+
+        self.restart_button2 = ttk.Button(self.settings_frame2, text="Сменить режим работы",
+                                          command=self.restart_application)
+        self.restart_button2.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
     def run(self):
         self.root.mainloop()
@@ -1495,5 +1578,5 @@ class TrackTool(TKMT.ThemedTKinterFrame):
 
 if __name__ == "__main__":
     app = TrackTool("Sun-valley", "dark")
-    #app.notebook.select(app.sniffer_tab)
+    # app.notebook.select(app.sniffer_tab)
     app.run()

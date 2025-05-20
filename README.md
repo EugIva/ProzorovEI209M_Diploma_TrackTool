@@ -4,9 +4,7 @@
 > TrackTool - инструмент для работы с треками полётов ВС.
 
 🎓  Прозоров Евгений Иванович 209М          
-📧 EugIva_work@gosniias.ru      
 📧 EIProzorov@mail.ru       
-
 
 ![image](https://github.com/EugIva/ProzorovEI109m_labsML/assets/145147798/fa1e530d-fd07-4fc7-9231-4c2c99cc5224)
 ***

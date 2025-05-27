@@ -6,6 +6,12 @@
 🎓  Прозоров Евгений Иванович 209М          
 📧 EIProzorov@mail.ru       
 
+Основная разработка велась в рабочем ГитЛабе, в гитхаб коммитились основные промежуточные результаты   
+![image](https://github.com/user-attachments/assets/9bcddaea-0dc4-4f55-8437-681d475957cc)
+![image](https://github.com/user-attachments/assets/138a9ad3-6a27-4e78-bb2f-1eb9b00954f2)
+![image](https://github.com/user-attachments/assets/bf4c8a3a-fdfc-4180-b2bd-7aeee30bedc6)
+
+
 ![image](https://github.com/EugIva/ProzorovEI109m_labsML/assets/145147798/fa1e530d-fd07-4fc7-9231-4c2c99cc5224)    
  -- FlightRadar24 --      
 ***    
